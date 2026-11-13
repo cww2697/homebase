@@ -1,0 +1,18 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/Homebase
+
+# Test & persistent data
+/data
+/test_data
+*.tmp-*
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

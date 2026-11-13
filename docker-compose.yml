@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  homebase:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: homebase
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persistent configuration directory
+      - ./data:/app/data
+      # Optional: Mount Docker socket for container stats widget
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - PORT=8080
+      - HOMEBASE_DATA_DIR=/app/data
+      - TZ=UTC

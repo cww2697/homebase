@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homebase | Homelab Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-dark">
+  <div id="app" class="app-layout">
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon" id="brand-icon"></div>
+        <div class="brand-info">
+          <h1 id="dashboard-title" class="brand-title">Homebase</h1>
+          <span class="brand-status" id="brand-status"><span class="status-dot online"></span> System Online</span>
+        </div>
+      </div>
+
+      <!-- Quick Header Widgets (Clock / Mini Weather) -->
+      <div class="topbar-center">
+        <div id="header-clock" class="header-pill">
+          <span class="icon-slot" data-icon="clock"></span>
+          <span id="header-clock-time">00:00:00</span>
+          <span id="header-clock-date" class="pill-muted">--</span>
+        </div>
+        <div id="header-weather" class="header-pill" style="display: none;">
+          <span class="icon-slot" data-icon="cloud"></span>
+          <span id="header-weather-temp">--°C</span>
+          <span id="header-weather-city" class="pill-muted">--</span>
+        </div>
+      </div>
+
+      <!-- Action Controls -->
+      <div class="topbar-actions">
+        <!-- Edit Mode Toggle -->
+        <button id="btn-toggle-edit" class="btn btn-secondary btn-edit-toggle">
+          <span class="icon-slot" data-icon="edit-3"></span>
+          <span id="edit-toggle-label">Edit Dashboard</span>
+        </button>
+
+        <!-- Save Indicator (when dirty in edit mode) -->
+        <button id="btn-save-config" class="btn btn-primary btn-save-config" style="display: none;">
+          <span class="icon-slot" data-icon="save"></span>
+          <span>Save Changes</span>
+        </button>
+
+        <!-- Git Sync Modal Trigger -->
+        <button id="btn-open-git" class="btn btn-icon" title="Git Synchronization & Backup">
+          <span class="icon-slot" data-icon="git-branch"></span>
+          <span id="git-indicator" class="badge-dot"></span>
+        </button>
+
+        <!-- Settings Modal Trigger -->
+        <button id="btn-open-settings" class="btn btn-icon" title="Dashboard Settings">
+          <span class="icon-slot" data-icon="settings"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs Bar -->
+    <nav class="tabs-bar">
+      <div class="tabs-list" id="tabs-container">
+        <!-- Dynamic tabs rendered by JavaScript -->
+      </div>
+      <button id="btn-add-tab" class="btn btn-sm btn-ghost tab-add-btn" title="Add Page/Tab" style="display: none;">
+        <span class="icon-slot" data-icon="plus"></span>
+        <span>New Tab</span>
+      </button>
+    </nav>
+
+    <!-- Main Content: Widgets Grid -->
+    <main class="main-content">
+      <div id="widgets-grid" class="widgets-grid">
+        <!-- Dynamic widgets rendered by JavaScript -->
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-left">
+        <span>Homebase &bull; Next-Gen Homelab Dashboard</span>
+      </div>
+      <div class="footer-right">
+        <button id="btn-export-config" class="btn-text">Export Config</button>
+        <button id="btn-import-config" class="btn-text">Import Config</button>
+        <input type="file" id="file-import-input" accept=".json" style="display: none;">
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Add Widget Modal (Template Catalog) -->
+  <div id="modal-add-widget" class="modal-backdrop">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="icon-slot" data-icon="grid"></span>
+          <h3>Add Widget</h3>
+        </div>
+        <button class="btn-close" data-close-modal="modal-add-widget">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Choose a widget type to place on the active tab:</p>
+        <div class="catalog-grid" id="widget-catalog">
+          <!-- Catalog items injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Widget Modal -->
+  <div id="modal-edit-widget" class="modal-backdrop">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="icon-slot" data-icon="sliders"></span>
+          <h3 id="edit-widget-modal-title">Configure Widget</h3>
+        </div>
+        <button class="btn-close" data-close-modal="modal-edit-widget">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-edit-widget" class="form-grid">
+          <input type="hidden" id="widget-id">
+          <input type="hidden" id="widget-type">
+
+          <div class="form-group col-span-2">
+            <label for="widget-title">Widget Title</label>
+            <input type="text" id="widget-title" class="form-input" required placeholder="Widget display title">
+          </div>
+
+          <div class="form-group">
+            <label for="widget-colspan">Width (Columns)</label>
+            <select id="widget-colspan" class="form-select">
+              <option value="1">1 Column (Small)</option>
+              <option value="2" selected>2 Columns (Medium)</option>
+              <option value="3">3 Columns (Wide)</option>
+              <option value="4">4 Columns (Full Row)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="widget-rowspan">Height (Rows)</label>
+            <select id="widget-rowspan" class="form-select">
+              <option value="1" selected>1 Row</option>
+              <option value="2">2 Rows</option>
+              <option value="3">3 Rows</option>
+            </select>
+          </div>
+
+          <!-- Dynamic Properties Container based on widget type -->
+          <div id="widget-properties-fields" class="form-group col-span-2 properties-section">
+            <!-- Injected by JS -->
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-edit-widget">Cancel</button>
+        <button type="button" id="btn-save-widget" class="btn btn-primary">Apply Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Manager Modal -->
+  <div id="modal-tab-editor" class="modal-backdrop">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="icon-slot" data-icon="folder"></span>
+          <h3 id="tab-modal-title">Manage Tab</h3>
+        </div>
+        <button class="btn-close" data-close-modal="modal-tab-editor">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-tab" class="form-grid">
+          <input type="hidden" id="tab-id">
+          <div class="form-group col-span-2">
+            <label for="tab-name">Tab Name</label>
+            <input type="text" id="tab-name" class="form-input" required placeholder="e.g. Media, Servers, Network">
+          </div>
+          <div class="form-group col-span-2">
+            <label for="tab-icon">Icon</label>
+            <select id="tab-icon" class="form-select">
+              <option value="layout-dashboard">Dashboard</option>
+              <option value="server">Server</option>
+              <option value="hard-drive">Storage</option>
+              <option value="cpu">CPU / Compute</option>
+              <option value="grid">Grid / Apps</option>
+              <option value="film">Media</option>
+              <option value="shield">Security / Network</option>
+              <option value="home">Home / Smart</option>
+              <option value="file-text">Notes</option>
+              <option value="terminal">Terminal</option>
+              <option value="activity">Monitoring</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-delete-tab" class="btn btn-danger" style="margin-right: auto; display: none;">Delete Tab</button>
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-tab-editor">Cancel</button>
+        <button type="button" id="btn-save-tab" class="btn btn-primary">Save Tab</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="modal-settings" class="modal-backdrop">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="icon-slot" data-icon="settings"></span>
+          <h3>Dashboard Settings</h3>
+        </div>
+        <button class="btn-close" data-close-modal="modal-settings">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-settings" class="form-grid">
+          <div class="form-group col-span-2">
+            <label for="setting-title">Dashboard Title</label>
+            <input type="text" id="setting-title" class="form-input" placeholder="Homebase">
+          </div>
+
+          <div class="form-group">
+            <label for="setting-theme">Color Theme</label>
+            <select id="setting-theme" class="form-select">
+              <option value="dark">Dark Slate (Default)</option>
+              <option value="cyberpunk">Cyberpunk Neon</option>
+              <option value="nord">Nord Frost</option>
+              <option value="slate">Deep Slate</option>
+              <option value="monokai">Monokai Pro</option>
+              <option value="light">Clean Light</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="setting-columns">Grid Columns</label>
+            <select id="setting-columns" class="form-select">
+              <option value="3">3 Columns (Compact)</option>
+              <option value="4" selected>4 Columns (Standard)</option>
+              <option value="5">5 Columns (Wide)</option>
+              <option value="6">6 Columns (Ultra-wide)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="setting-refresh">Metric Refresh Interval (seconds)</label>
+            <input type="number" id="setting-refresh" class="form-input" min="5" max="300" value="30">
+          </div>
+
+          <div class="form-group">
+            <label for="setting-bg-blur">Background Blur Effect</label>
+            <div class="toggle-container">
+              <input type="checkbox" id="setting-bg-blur" class="toggle-input">
+              <label for="setting-bg-blur" class="toggle-label"></label>
+            </div>
+          </div>
+
+          <div class="form-group col-span-2">
+            <label for="setting-bg-url">Custom Background Image URL</label>
+            <input type="text" id="setting-bg-url" class="form-input" placeholder="https://example.com/wallpaper.jpg">
+          </div>
+
+          <div class="col-span-2 form-divider"></div>
+
+          <div class="col-span-2 danger-zone">
+            <h4>Danger Zone</h4>
+            <p>Restore the default sample tabs, services, and widgets.</p>
+            <button type="button" id="btn-reset-defaults" class="btn btn-outline-danger">Reset to Defaults</button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-settings">Cancel</button>
+        <button type="button" id="btn-save-settings" class="btn btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Git Synchronization Modal -->
+  <div id="modal-git" class="modal-backdrop">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="icon-slot" data-icon="git-branch"></span>
+          <h3>Git Configuration Sync</h3>
+        </div>
+        <button class="btn-close" data-close-modal="modal-git">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Save or load your dashboard configuration from GitHub or GitLab so your layout is versioned and safe across container rebuilds.</p>
+
+        <form id="form-git" class="form-grid">
+          <div class="form-group col-span-2">
+            <div class="toggle-row">
+              <label for="git-enabled" class="font-medium">Enable Git Sync</label>
+              <div class="toggle-container">
+                <input type="checkbox" id="git-enabled" class="toggle-input">
+                <label for="git-enabled" class="toggle-label"></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group col-span-2">
+            <label for="git-repo-url">Repository URL</label>
+            <input type="text" id="git-repo-url" class="form-input" placeholder="https://github.com/username/homelab-config.git">
+            <small class="form-help">HTTPS URL of your GitHub or GitLab repository.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="git-branch">Branch</label>
+            <input type="text" id="git-branch" class="form-input" placeholder="main" value="main">
+          </div>
+
+          <div class="form-group">
+            <label for="git-token">Personal Access Token</label>
+            <input type="password" id="git-token" class="form-input" placeholder="ghp_xxxxxxxxxxxx">
+            <small class="form-help">Token with repo write access (for private repos or push).</small>
+          </div>
+
+          <div class="form-group col-span-2">
+            <div class="checkbox-row">
+              <input type="checkbox" id="git-auto-save" class="checkbox-input">
+              <label for="git-auto-save">Auto-push configuration to Git on every save</label>
+            </div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="git-auto-startup" class="checkbox-input">
+              <label for="git-auto-startup">Auto-pull from Git when Homebase starts</label>
+            </div>
+          </div>
+
+          <div class="col-span-2 sync-actions-card">
+            <div class="sync-status-display">
+              <span class="text-muted">Last Sync Status:</span>
+              <span id="git-status-text" class="status-badge">Not configured</span>
+            </div>
+            <div class="sync-buttons">
+              <button type="button" id="btn-git-pull" class="btn btn-secondary">
+                <span class="icon-slot" data-icon="download"></span>
+                <span>Pull from Git</span>
+              </button>
+              <button type="button" id="btn-git-push" class="btn btn-secondary">
+                <span class="icon-slot" data-icon="upload"></span>
+                <span>Push to Git</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="git-output-box" class="col-span-2 log-box" style="display: none;">
+            <pre id="git-output-text"></pre>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-git">Close</button>
+        <button type="button" id="btn-save-git-config" class="btn btn-primary">Save Git Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/icons.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/widgets.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
